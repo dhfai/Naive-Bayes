@@ -1,143 +1,105 @@
+Tentu, mari kita bahas secara rinci tahapan dari kode yang Anda berikan, dari pemrosesan data hingga output prediksi yang dihasilkan.
 
+### Tahapan Kode:
 
+#### 1. Impor Library dan Baca Data
 ```python
 import pandas as pd
-```
-Baris ini mengimpor pustaka `pandas`, yang digunakan untuk manipulasi data dan analisis data. `pandas` menyediakan struktur data seperti DataFrame yang sangat berguna untuk memproses dan menganalisis data tabular.
-
-```python
 from sklearn.model_selection import train_test_split
-```
-Baris ini mengimpor fungsi `train_test_split` dari pustaka `scikit-learn` (`sklearn`). Fungsi ini digunakan untuk membagi dataset menjadi set pelatihan dan set pengujian.
-
-```python
 from sklearn.naive_bayes import GaussianNB
-```
-Baris ini mengimpor model Gaussian Naive Bayes dari `sklearn`. Model ini adalah algoritma pembelajaran mesin yang sering digunakan untuk klasifikasi berdasarkan teorema Bayes dengan asumsi distribusi Gaussian (normal).
-
-```python
 from sklearn.metrics import accuracy_score, classification_report
-```
-Baris ini mengimpor fungsi `accuracy_score` dan `classification_report` dari `sklearn`. `accuracy_score` digunakan untuk menghitung akurasi model, sedangkan `classification_report` memberikan metrik evaluasi tambahan seperti presisi, recall, dan F1-score.
-
-```python
 from sklearn.preprocessing import LabelEncoder
-```
-Baris ini mengimpor `LabelEncoder` dari `sklearn`. `LabelEncoder` digunakan untuk mengonversi label kategori menjadi nilai numerik yang dapat digunakan dalam model pembelajaran mesin.
-
-```python
 import matplotlib.pyplot as plt
-```
-Baris ini mengimpor pustaka `matplotlib.pyplot` sebagai `plt`, yang digunakan untuk membuat grafik dan visualisasi data.
 
-```python
-file_path = '\\path\\data\\PharmaDrugSales.xlsx'
+# Baca data dari file Excel
+file_path = './data/PharmaDrugSales.xlsx'
 data = pd.read_excel(file_path)
 ```
-Dua baris ini membaca file Excel yang berisi data penjualan obat dari jalur yang ditentukan dan menyimpannya dalam DataFrame `data`.
+- **Impor Library**: Kode dimulai dengan mengimpor semua library yang diperlukan, seperti pandas untuk manipulasi data, sklearn untuk algoritma pembelajaran mesin (machine learning), dan matplotlib untuk visualisasi.
+- **Baca Data**: Data dibaca dari file Excel 'PharmaDrugSales.xlsx' dan dimuat ke dalam DataFrame `data` menggunakan `pd.read_excel()`.
 
+#### 2. Persiapan Data
 ```python
+# Menghapus baris yang memiliki nilai yang hilang (missing values)
 data = data.dropna()
-```
-Baris ini menghapus semua baris yang mengandung nilai NaN (kosong) dari DataFrame `data`.
 
-```python
+# Menghapus baris yang memiliki nilai '#VALUE!' pada kolom 'Year'
 data = data[data['Year'] != '#VALUE!']
+
+# Mengonversi kolom 'Year', 'Month', 'Date', dan 'Hour' menjadi tipe data integer
 data['Year'] = data['Year'].astype(int)
 data['Month'] = data['Month'].astype(int)
 data['Date'] = data['Date'].astype(int)
 data['Hour'] = data['Hour'].astype(int)
-```
-Blok ini menghapus baris yang mengandung nilai '#VALUE!' di kolom 'Year' dan mengonversi tipe data kolom 'Year', 'Month', 'Date', dan 'Hour' menjadi tipe integer.
 
-```python
+# Menerapkan LabelEncoder untuk kolom 'Day' yang bersifat kategorikal
 label_encoder = LabelEncoder()
 data['Day'] = label_encoder.fit_transform(data['Day'])
 ```
-Dua baris ini membuat instance `LabelEncoder` dan mengonversi kolom 'Day' menjadi nilai numerik.
+- **Pembersihan Data**: Baris yang memiliki nilai yang hilang dihapus dari DataFrame menggunakan `dropna()`.
+- **Filtering Data**: Baris yang memiliki nilai '#VALUE!' pada kolom 'Year' dihapus dari DataFrame.
+- **Konversi Tipe Data**: Kolom 'Year', 'Month', 'Date', dan 'Hour' dikonversi menjadi tipe data integer menggunakan `astype(int)`.
+- **Encoding Kategori**: Kolom 'Day' yang bersifat kategorikal diencode menggunakan `LabelEncoder()` untuk diubah menjadi nilai numerik.
 
+#### 3. Iterasi dan Pelatihan Model untuk Setiap Kategori Target
 ```python
+# Daftar kolom target yang ingin diprediksi
 target_columns = [
     'AceticAcidDerivatives', 'PropionicAcidDerivatives', 'SalicylicAcidDerivatives', 
     'PyrazolonesAndAnilides', 'AnxiolyticDrugs', 'HypnoticsSndSedativesDrugs', 
     'ObstructiveAirwayDrugs', 'Antihistamines'
 ]
-```
-Baris ini mendefinisikan daftar kolom target yang akan diprediksi oleh model.
 
-```python
+# Fitur-fitur yang digunakan untuk prediksi
 features = ['Year', 'Month', 'Date', 'Hour', 'Day']
 X = data[features]
-```
-Dua baris ini mendefinisikan daftar kolom fitur dan mengekstrak fitur tersebut dari DataFrame `data` untuk digunakan sebagai input model.
 
-```python
+# Model Gaussian Naive Bayes
 model = GaussianNB()
-```
-Baris ini membuat instance model Gaussian Naive Bayes.
 
-```python
+# Iterasi untuk setiap kolom target
 for target in target_columns:
-```
-Baris ini memulai loop untuk iterasi melalui setiap kolom target yang didefinisikan sebelumnya.
-
-```python
+    # Pengelompokan (binning) untuk target variabel
     bins = [0, 1, 2, 3, 4, 5, float('inf')]
     labels = ['0-1', '1-2', '2-3', '3-4', '4-5', '5+']
     data[target] = pd.cut(data[target], bins=bins, labels=labels, right=False)
-```
-Blok ini membagi nilai dalam kolom target menjadi beberapa kategori menggunakan fungsi `pd.cut` dengan batas yang ditentukan dalam `bins` dan memberi label kategori tersebut dengan `labels`.
-
-```python
+    
+    # Variabel target yang akan diprediksi
     y = data[target]
-```
-Baris ini mengekstrak kolom target yang sedang diproses menjadi variabel `y`.
-
-```python
+    
+    # Pembagian data menjadi set pelatihan dan pengujian
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
-```
-Baris ini membagi data fitur dan target menjadi set pelatihan dan pengujian dengan proporsi 70% untuk pelatihan dan 30% untuk pengujian.
-
-```python
+    
+    # Melatih model dengan data pelatihan
     model.fit(X_train, y_train)
-```
-Baris ini melatih model Gaussian Naive Bayes menggunakan data pelatihan.
-
-```python
+    
+    # Melakukan prediksi terhadap data pengujian
     y_pred = model.predict(X_test)
-```
-Baris ini menggunakan model yang telah dilatih untuk memprediksi nilai target pada data pengujian.
-
-```python
+    
+    # Membuat dataframe untuk menyimpan hasil prediksi
     predictions_df = pd.DataFrame({
-        'Waktu': X_test.index,
-        'Tanggal': X_test['Date'],
-        'Jam': X_test['Hour'],
-        'Hari': X_test['Day'],
-        'Jumlah Penjualan': y_test.values,
-        'Prediksi Jumlah Penjualan': y_pred
+        'Waktu': X_test.index,  # Indeks dari data pengujian
+        'Tanggal': X_test['Date'],  # Kolom 'Date' dari data pengujian
+        'Jam': X_test['Hour'],  # Kolom 'Hour' dari data pengujian
+        'Hari': X_test['Day'],  # Kolom 'Day' dari data pengujian
+        'Jumlah Penjualan': y_test.values,  # Nilai aktual dari target yang diuji
+        'Prediksi Jumlah Penjualan': y_pred  # Nilai yang diprediksi oleh model
     })
-```
-Blok ini membuat DataFrame `predictions_df` yang berisi informasi waktu, tanggal, jam, hari, jumlah penjualan sebenarnya, dan prediksi jumlah penjualan untuk setiap observasi dalam set pengujian.
-
-```python
+    
+    # Mengembalikan nilai label dari 'Day' ke bentuk aslinya
     predictions_df['Hari'] = label_encoder.inverse_transform(predictions_df['Hari'])
-```
-Baris ini mengonversi nilai numerik pada kolom 'Hari' kembali ke label kategori aslinya.
-
-```python
-    predictions_df.to_excel(f'\\path\\data\\prediksi\\predictions_{target}.xlsx', index=False)
-```
-Baris ini menyimpan DataFrame `predictions_df` ke file Excel di jalur yang ditentukan dengan nama file yang mencerminkan kolom target yang diprediksi.
-
-```python
+    
+    # Menyimpan hasil prediksi ke file Excel
+    predictions_df.to_excel(f'./data/prediksi/predictions_{target}.xlsx', index=False)
+    
+    # Menghitung akurasi model
     accuracy = accuracy_score(y_test, y_pred)
     print(f'Akurasi untuk {target}: {accuracy}')
+    
+    # Menampilkan laporan klasifikasi
     print(classification_report(y_test, y_pred))
-```
-Blok ini menghitung dan mencetak akurasi prediksi serta laporan klasifikasi untuk kolom target yang sedang diproses.
-
-```python
+    
+    # Visualisasi prediksi vs. nilai aktual
     plt.figure(figsize=(10, 6))
     plt.plot(y_test.values, label='Jumlah Penjualan Sebenarnya')
     plt.plot(y_pred, label='Prediksi Jumlah Penjualan')
@@ -147,6 +109,18 @@ Blok ini menghitung dan mencetak akurasi prediksi serta laporan klasifikasi untu
     plt.legend()
     plt.show()
 ```
-Blok ini membuat plot yang membandingkan jumlah penjualan sebenarnya dan jumlah penjualan yang diprediksi untuk kolom target yang sedang diproses. Plot ini ditampilkan dengan menggunakan `matplotlib`.
+- **Iterasi Melalui Setiap Kolom Target**: Untuk setiap kolom target dalam `target_columns`, langkah-langkah berikut dilakukan:
+  - **Pengelompokan Data**: Variabel target diubah menjadi kategori menggunakan pengelompokan (binning) dengan batas `bins` dan label `labels`.
+  - **Pembagian Data**: Data dibagi menjadi set pelatihan (`X_train`, `y_train`) dan pengujian (`X_test`, `y_test`) menggunakan `train_test_split`.
+  - **Pelatihan Model**: Model Gaussian Naive Bayes dilatih menggunakan data pelatihan (`X_train`, `y_train`).
+  - **Prediksi**: Model diterapkan pada data pengujian (`X_test`) untuk membuat prediksi (`y_pred`).
+  - **Penyimpanan Hasil**: Hasil prediksi dan data relevan disimpan dalam DataFrame `predictions_df` dan diekspor ke file Excel.
+  - **Evaluasi Model**: Akurasi model dihitung menggunakan `accuracy_score` dan laporan klasifikasi ditampilkan menggunakan `classification_report`.
+  - **Visualisasi**: Visualisasi hasil prediksi dibuat menggunakan `matplotlib` untuk membandingkan prediksi dengan nilai aktual.
 
-Secara keseluruhan, kode ini membaca data penjualan obat, membersihkannya, mengonversi beberapa kolom menjadi tipe data yang sesuai, melatih model Gaussian Naive Bayes untuk setiap kolom target, melakukan prediksi, menyimpan hasil prediksi ke file Excel, serta menampilkan akurasi dan laporan klasifikasi model.
+### Output
+- Setiap iterasi pada kolom target akan menghasilkan:
+  - File Excel dengan prediksi untuk setiap kategori target.
+  - Grafik visualisasi yang membandingkan prediksi dengan nilai aktual dari jumlah penjualan.
+
+Dengan demikian, kode ini melakukan pemrosesan data, melatih model prediktif untuk masing-masing kategori penjualan obat, dan menghasilkan output yang berguna untuk analisis dan prediksi lebih lanjut.

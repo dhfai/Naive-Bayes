@@ -6,7 +6,7 @@ from sklearn.preprocessing import LabelEncoder
 import matplotlib.pyplot as plt
 
 
-file_path = '\\path\\data\\PharmaDrugSales.xlsx'
+file_path = './data/PharmaDrugSales.xlsx'
 data = pd.read_excel(file_path)
 
 data = data.dropna()
@@ -65,7 +65,7 @@ for target in target_columns:
     predictions_df['Hari'] = label_encoder.inverse_transform(predictions_df['Hari'])  
 
     
-    predictions_df.to_excel(f'\\path\\data\\prediksi\\predictions_{target}.xlsx', index=False)
+    predictions_df.to_excel(f'./data/prediksi/predictions_{target}.xlsx', index=False)
 
     
     accuracy = accuracy_score(y_test, y_pred)
